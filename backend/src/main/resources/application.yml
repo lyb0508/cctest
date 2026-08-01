@@ -1,0 +1,13 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: food-ai-assistant-backend
+
+foodai:
+  ai:
+    provider: ollama
+    model-name: qwen2.5:3b
+    api-key: ""
+    base-url: http://localhost:11434

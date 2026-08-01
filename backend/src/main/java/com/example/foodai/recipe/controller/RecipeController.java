@@ -1,0 +1,34 @@
+package com.example.foodai.recipe.controller;
+
+import com.example.foodai.common.ApiResponse;
+import com.example.foodai.recipe.dto.DishGuideRequest;
+import com.example.foodai.recipe.service.RecipeService;
+import com.example.foodai.recipe.vo.RecipeDetailResponse;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/recipes")
+public class RecipeController {
+
+    private final RecipeService recipeService;
+
+    public RecipeController(RecipeService recipeService) {
+        this.recipeService = recipeService;
+    }
+
+    @PostMapping("/dish-guide")
+    public ApiResponse<RecipeDetailResponse> createDishGuide(@Valid @RequestBody DishGuideRequest request) {
+        return ApiResponse.success(recipeService.createDishGuide(request));
+    }
+
+    @GetMapping("/{recipeId}")
+    public ApiResponse<RecipeDetailResponse> getRecipeDetail(@PathVariable Long recipeId) {
+        return ApiResponse.success(recipeService.getRecipeDetail(recipeId));
+    }
+}
