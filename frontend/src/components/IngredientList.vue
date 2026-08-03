@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { RecipeIngredient } from "../types/recipe";
 
+// 食材清单：左侧取食材名首字做徽标，右侧展示用量
 defineProps<{
   ingredients: RecipeIngredient[];
 }>();

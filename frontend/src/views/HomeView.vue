@@ -9,6 +9,7 @@ const router = useRouter();
 const loading = ref(false);
 const errorMessage = ref("");
 
+// 提交表单：调用生成接口后跳转到详情页；失败时展示拦截器透传的真实错误信息
 async function handleSubmit(payload: DishGuideRequest) {
   loading.value = true;
   errorMessage.value = "";

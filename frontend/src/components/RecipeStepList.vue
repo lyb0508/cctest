@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { RecipeStep } from "../types/recipe";
 
+// 制作步骤列表：按 stepNo 排序展示，含预计时长与提示（时长由后端归一化兜底，不会为空）
 defineProps<{
   steps: RecipeStep[];
 }>();

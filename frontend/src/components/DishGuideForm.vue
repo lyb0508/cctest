@@ -6,6 +6,7 @@ const emit = defineEmits<{
   submit: [payload: DishGuideRequest];
 }>();
 
+// 表单模型：默认 2 人份 / 新手难度；与后端校验规则（servings 1~10）对应
 const form = reactive<DishGuideRequest>({
   dishName: "",
   servings: 2,
@@ -14,6 +15,7 @@ const form = reactive<DishGuideRequest>({
   additionalNote: ""
 });
 
+// 菜名为空时不触发提交（由父组件展示统一错误即可）
 function handleSubmit() {
   if (!form.dishName.trim()) {
     return;

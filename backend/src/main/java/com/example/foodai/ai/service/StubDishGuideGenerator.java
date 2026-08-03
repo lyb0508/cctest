@@ -9,6 +9,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * 本地示例生成器：provider=stub 时（或 Ollama 未启用时）返回固定模板数据，
+ * 用于不依赖模型即可演示/开发前端。promptTemplate 仅用于在 tips 里展示提示词预览。
+ */
 @Component
 public class StubDishGuideGenerator implements DishGuideGenerator {
 

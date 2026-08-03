@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { RecipeDetailResponse } from "../types/recipe";
 
+// 菜谱头部：展示类型/标题/摘要与元信息（份量、时间、难度）
 defineProps<{
   recipe: RecipeDetailResponse;
 }>();

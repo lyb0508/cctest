@@ -7,6 +7,11 @@ import com.example.foodai.recipe.vo.RecipeData;
 import com.example.foodai.recipe.vo.RecipeDetailResponse;
 import org.springframework.stereotype.Service;
 
+/**
+ * AI 生成门面：把生成器输出的 AiRecipeResult 组装成对外业务响应 RecipeDetailResponse。
+ * 说明：外层 title/summary 目前为固定文案（"新手版" + 菜名 / 固定摘要），
+ * 后续可改为直接使用 AI 生成的 recipe.title，避免与 AI 输出重复。
+ */
 @Service
 public class DishGuideAiService {
 

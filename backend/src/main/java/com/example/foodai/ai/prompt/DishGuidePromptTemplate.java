@@ -3,6 +3,11 @@ package com.example.foodai.ai.prompt;
 import com.example.foodai.ai.model.AiDishGuideRequest;
 import org.springframework.stereotype.Component;
 
+/**
+ * 提示词模板：把用户请求渲染成给模型的指令。
+ * 通过"只输出 JSON + 明确字段名 + 示例 + 规则"约束模型返回可解析的结构化结果；
+ * render(request, extraInstruction) 用于解析失败后的重试，附加纠正指令。
+ */
 @Component
 public class DishGuidePromptTemplate {
 

@@ -15,14 +15,22 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import java.util.stream.Collectors;
 
+/**
+ * 全局异常处理：把各类异常统一转换为 ApiResponse + 合适的 HTTP 状态码。
+ * 错误码约定：
+ * 4000 参数校验失败 / 4001 约束违规 / 4002 请求体 JSON 非法 / 4003 路径参数类型错误
+ * 4004 媒体类型不支持(415) / 4040 资源不存在 / 5000 未知异常 / 5001 业务异常
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    // @Valid 触发的字段校验失败（如 @NotBlank、@Size）
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiResponse<Void> handleValidation(MethodArgumentNotValidException exception) {
+        // 把多个字段错误拼接为一条提示，如 "dishName: dishName is required"
         String message = exception.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -31,44 +39,51 @@ public class GlobalExceptionHandler {
         return new ApiResponse<>(4000, message, null);
     }
 
+    // 方法参数上的约束校验失败（路径/查询参数）
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiResponse<Void> handleConstraintViolation(ConstraintViolationException exception) {
         return new ApiResponse<>(4001, exception.getMessage(), null);
     }
 
+    // 请求体不是合法 JSON 或无法反序列化
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiResponse<Void> handleUnreadable(HttpMessageNotReadableException exception) {
         return new ApiResponse<>(4002, "Malformed request body", null);
     }
 
+    // 路径/查询参数类型不匹配，如 /api/recipes/abc（期望数字 id）
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiResponse<Void> handleTypeMismatch(MethodArgumentTypeMismatchException exception) {
         return new ApiResponse<>(4003, "Invalid parameter: " + exception.getName(), null);
     }
 
-
+    // Content-Type 不被支持（如用表单方式调 JSON 接口）
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
     public ApiResponse<Void> handleMediaType(HttpMediaTypeNotSupportedException exception) {
         return new ApiResponse<>(4004, "Unsupported media type", null);
     }
 
+    // 资源不存在（如查询不存在的菜谱）
     @ExceptionHandler(ResourceNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiResponse<Void> handleNotFound(ResourceNotFoundException exception) {
         return new ApiResponse<>(4040, exception.getMessage(), null);
     }
 
+    // 业务异常：服务端配置/能力问题（如 AI 未配置、AI 返回无法解析）
     @ExceptionHandler(BusinessException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiResponse<Void> handleBusiness(BusinessException exception) {
+        // 业务异常 message 会透传给调用方，这里同时落 warn 日志便于排查
         log.warn("Business exception: {}", exception.getMessage());
         return new ApiResponse<>(5001, exception.getMessage(), null);
     }
 
+    // 兜底：未知异常绝不把堆栈暴露给客户端，只记录日志并返回通用提示
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiResponse<Void> handleUnexpected(Exception exception) {

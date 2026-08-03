@@ -12,6 +12,7 @@ const recipe = ref<RecipeDetailResponse | null>(null);
 const loading = ref(true);
 const errorMessage = ref("");
 
+// 进入页面即按路由参数加载菜谱详情；错误信息来自 http 拦截器透传的后端 message
 onMounted(async () => {
   try {
     const recipeId = String(route.params.recipeId);

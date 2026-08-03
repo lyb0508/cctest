@@ -17,6 +17,12 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 通过 langchain4j-ollama 调用本地 Ollama 服务生成菜谱（当前唯一真实 AI 实现）。
+ * 调用流程：构造提示词 -> Ollama(format=json) 返回 JSON -> Jackson 解析为 AiRecipeResult
+ *           -> 结构校验（失败自动重试一次）-> 步骤时长兜底归一化。
+ * provider 非 "ollama" 时回退到 StubDishGuideGenerator。
+ */
 @Component
 @Primary
 public class OllamaDishGuideGenerator implements DishGuideGenerator {
@@ -42,10 +48,12 @@ public class OllamaDishGuideGenerator implements DishGuideGenerator {
 
     @Override
     public AiRecipeResult generate(AiDishGuideRequest request) {
+        // provider 开关：不是 ollama 就走本地示例，保证 stub 模式也能跑通全链路
         if (!"ollama".equalsIgnoreCase(aiProperties.getProvider())) {
             return fallbackGenerator.generate(request);
         }
 
+        // 前置校验：配置缺失直接抛业务异常（500），避免带着空配置去调模型
         if (aiProperties.getBaseUrl() == null || aiProperties.getBaseUrl().isBlank()) {
             throw new BusinessException("AI provider is set to ollama but base-url is missing");
         }
@@ -55,8 +63,10 @@ public class OllamaDishGuideGenerator implements DishGuideGenerator {
 
         OllamaChatModel model = chatModel();
 
+        // 第一次尝试：正常提示词
         AiRecipeResult result = tryGenerate(model, promptTemplate.render(request));
         if (!isValid(result)) {
+            // 小模型偶尔会漏字段/写错字段名，用附加纠正指令重试一次再放弃
             log.warn("AI returned invalid recipe structure, retrying once. firstResult={}", result);
             result = tryGenerate(model, promptTemplate.render(request,
                     "Your previous answer was invalid: missing fields, wrong field names, or malformed JSON. "
@@ -68,6 +78,10 @@ public class OllamaDishGuideGenerator implements DishGuideGenerator {
         return normalize(result);
     }
 
+    /**
+     * 调用模型并解析 JSON。任何异常（网络/超时/解析失败）都返回 null，
+     * 由上层决定重试还是报错，避免把底层异常细节直接抛给客户端。
+     */
     private AiRecipeResult tryGenerate(OllamaChatModel model, String prompt) {
         try {
             String json = model.chat(prompt);
@@ -78,6 +92,10 @@ public class OllamaDishGuideGenerator implements DishGuideGenerator {
         }
     }
 
+    /**
+     * 结构完整性校验：标题/描述/食材/步骤都非空，且每个步骤有标题和内容。
+     * 防止模型输出"看起来是 JSON 但缺关键字段"的结果被直接展示。
+     */
     private boolean isValid(AiRecipeResult result) {
         return result != null
                 && result.title() != null && !result.title().isBlank()
@@ -97,6 +115,8 @@ public class OllamaDishGuideGenerator implements DishGuideGenerator {
         if (result.steps().isEmpty()) {
             return result;
         }
+        // 前端固定渲染"预计 X 分钟"，模型可能漏给 duration；
+        // 按 totalTime 均摊到每步作为兜底，最后一步吸收余数，保证时长总和≈totalTime
         int total = result.totalTime() == null ? 0 : result.totalTime();
         int base = total / result.steps().size();
         if (base < 1) {
@@ -118,6 +138,10 @@ public class OllamaDishGuideGenerator implements DishGuideGenerator {
                 result.cookTime(), result.totalTime(), result.difficulty(), result.ingredients(), steps, result.tips());
     }
 
+    /**
+     * 懒加载单例：同一个 OllamaChatModel 复用连接配置；volatile + 双重检查保证线程安全。
+     * 模型名/地址来自配置，改 application.yml 后重启即可生效。
+     */
     private OllamaChatModel chatModel() {
         OllamaChatModel local = ollamaChatModel;
         if (local == null) {
@@ -137,6 +161,9 @@ public class OllamaDishGuideGenerator implements DishGuideGenerator {
         return local;
     }
 
+    /**
+     * 剥离模型偶尔会输出的 markdown 代码围栏（```json ... ```），只保留 JSON 本体。
+     */
     private String extractJson(String text) {
         String trimmed = text == null ? "" : text.trim();
         if (trimmed.startsWith("```")) {

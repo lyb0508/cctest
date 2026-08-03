@@ -1,4 +1,5 @@
 <template>
+  <!-- 应用外壳：装饰背景 + 顶部标题 + 路由出口 -->
   <div class="app-shell">
     <div class="background-orb orb-one"></div>
     <div class="background-orb orb-two"></div>

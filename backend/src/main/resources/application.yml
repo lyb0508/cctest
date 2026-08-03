@@ -6,6 +6,8 @@ spring:
     name: food-ai-assistant-backend
 
 foodai:
+  cors:
+    allowed-origins: http://localhost:5173
   ai:
     provider: ollama
     model-name: qwen2.5:3b
