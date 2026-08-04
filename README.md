@@ -81,6 +81,10 @@ npm run dev
 foodai:
   cors:
     allowed-origins: http://localhost:5173   # 跨域来源白名单（逗号分隔可配多个）
+  security:
+    api-key: ""                               # API Key；留空 = 不鉴权（本地开发默认）
+  rate-limit:
+    requests-per-minute: 10                   # 生成接口每 IP 每分钟上限
   ai:
     provider: ollama                          # stub | ollama
     model-name: qwen2.5:3b                    # Ollama 模型名
@@ -90,6 +94,8 @@ foodai:
 
 - `provider: stub` —— 本地示例生成器，不调用模型，用于纯前端演示
 - `provider: ollama` —— 调用本地 Ollama 真实模型（默认配置）
+- 鉴权：设置 `foodai.security.api-key` 后，所有 `/api/**` 请求需携带 `X-API-Key` 请求头；留空则不鉴权
+- 限流：`POST /api/recipes/dish-guide` 按客户端 IP 限流（默认 10 次/分钟），超限返回 429
 
 ### 前端接口地址
 
@@ -121,6 +127,8 @@ $env:VITE_API_BASE="http://your-backend:8080/api"   # Windows PowerShell
 
 校验规则：`dishName` 必填且 ≤50 字符；`servings` 1~10；`difficulty` ≤20；`flavor` ≤50；`additionalNote` ≤200。
 
+若配置了 `foodai.security.api-key`，请求需携带 `X-API-Key` 请求头；同一 IP 每分钟最多生成 `foodai.rate-limit.requests-per-minute` 次。
+
 ### 查询菜谱详情
 
 `GET /api/recipes/{recipeId}` —— 菜谱不存在时返回 404。
@@ -146,12 +154,14 @@ $env:VITE_API_BASE="http://your-backend:8080/api"   # Windows PowerShell
 | 4002 | 请求体 JSON 非法 | 400 |
 | 4003 | 路径参数类型错误 | 400 |
 | 4004 | 媒体类型不支持 | 415 |
+| 4010 | 未授权（API Key 缺失/不匹配） | 401 |
 | 4040 | 资源不存在 | 404 |
+| 4290 | 请求过于频繁（触发限流） | 429 |
 | 5000 | 未知异常 | 500 |
 | 5001 | 业务异常（如 AI 未配置） | 500 |
 
 ## 已知限制（MVP）
 
 - **无数据库**：菜谱保存在内存中，后端重启即丢失
-- **无鉴权/无限流**：接口未做身份校验与访问频率限制，仅适合本地开发
+- **鉴权/限流默认宽松**：本地开发 api-key 为空（不鉴权）、限流 10 次/分钟；生产环境应配置 api-key 并按需收紧限流
 - **无自动化测试**：后端与前端均未配置测试用例

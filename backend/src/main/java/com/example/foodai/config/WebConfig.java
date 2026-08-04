@@ -3,6 +3,7 @@ package com.example.foodai.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
@@ -16,8 +17,12 @@ public class WebConfig implements WebMvcConfigurer {
     /** 允许的来源白名单，来自配置项 foodai.cors.allowed-origins（逗号分隔可配多个） */
     private final String[] allowedOrigins;
 
-    public WebConfig(@Value("${foodai.cors.allowed-origins:http://localhost:5173}") String[] allowedOrigins) {
+    private final AuthRateLimitInterceptor authRateLimitInterceptor;
+
+    public WebConfig(@Value("${foodai.cors.allowed-origins:http://localhost:5173}") String[] allowedOrigins,
+                     AuthRateLimitInterceptor authRateLimitInterceptor) {
         this.allowedOrigins = allowedOrigins;
+        this.authRateLimitInterceptor = authRateLimitInterceptor;
     }
 
     @Override
@@ -27,5 +32,11 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins(allowedOrigins)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*");
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        // 鉴权 + 限流作用于所有 /api/** 请求（配置见 foodai.security / foodai.rate-limit）
+        registry.addInterceptor(authRateLimitInterceptor).addPathPatterns("/api/**");
     }
 }

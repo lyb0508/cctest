@@ -1,6 +1,11 @@
 <script setup lang="ts">
-import { reactive } from "vue";
+import { reactive, ref } from "vue";
 import type { DishGuideRequest } from "../types/recipe";
+
+// 表单组件：只负责收集输入并 emit，提交逻辑由父组件处理
+defineProps<{
+  loading?: boolean; // 父组件传入的"生成中"状态，用于禁用按钮防止重复提交
+}>();
 
 const emit = defineEmits<{
   submit: [payload: DishGuideRequest];
@@ -15,11 +20,15 @@ const form = reactive<DishGuideRequest>({
   additionalNote: ""
 });
 
-// 菜名为空时不触发提交（由父组件展示统一错误即可）
+const formError = ref("");
+
 function handleSubmit() {
   if (!form.dishName.trim()) {
+    // 空菜名要有明确反馈，不能静默无反应
+    formError.value = "请输入菜名";
     return;
   }
+  formError.value = "";
   emit("submit", {
     ...form,
     dishName: form.dishName.trim(),
@@ -29,30 +38,28 @@ function handleSubmit() {
 </script>
 
 <template>
-  <section class="panel hero-form-panel">
-    <div class="panel-header">
-      <div>
-        <p class="eyebrow">Dish Guide</p>
-        <h2>按菜名问做法</h2>
-        <p class="form-intro">想做什么菜，直接输入菜名，我们先把做法清晰地拆出来。</p>
-      </div>
-      <div class="hero-callout">
-        <strong>当前入口</strong>
-        <span>最短路径：菜名输入 -> 结构化做法</span>
-      </div>
+  <form class="dish-form" @submit.prevent="handleSubmit">
+    <div class="search-row">
+      <input
+        v-model="form.dishName"
+        class="field search-input"
+        placeholder="例如：红烧肉、宫保鸡丁、番茄炒蛋"
+        aria-label="菜名"
+        @input="formError = ''"
+      />
+      <button class="btn-primary" type="submit" :disabled="loading">
+        {{ loading ? "生成中…" : "生成做法" }}
+      </button>
     </div>
-    <div class="hero-search-row">
-      <input v-model="form.dishName" class="hero-search-input" placeholder="例如：红烧肉、宫保鸡丁、番茄炒蛋" />
-      <button class="primary-button" type="button" @click="handleSubmit">生成做法</button>
-    </div>
+    <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
     <div class="form-grid">
       <label>
         <span>人数</span>
-        <input v-model.number="form.servings" type="number" min="1" max="10" />
+        <input v-model.number="form.servings" class="field" type="number" min="1" max="10" />
       </label>
       <label>
         <span>难度</span>
-        <select v-model="form.difficulty">
+        <select v-model="form.difficulty" class="field">
           <option value="BEGINNER">新手</option>
           <option value="INTERMEDIATE">进阶</option>
           <option value="ADVANCED">熟练</option>
@@ -60,13 +67,14 @@ function handleSubmit() {
       </label>
       <label>
         <span>口味</span>
-        <input v-model="form.flavor" placeholder="例如：少辣、家常" />
+        <input v-model="form.flavor" class="field" placeholder="少辣、家常" />
       </label>
-      <label class="full-width">
+      <label class="full">
         <span>补充说明</span>
         <textarea
           v-model="form.additionalNote"
-          rows="4"
+          class="field"
+          rows="3"
           placeholder="例如：适合新手，没有烤箱"
         />
       </label>
@@ -77,5 +85,5 @@ function handleSubmit() {
       <button type="button" @click="form.dishName = '红烧肉'">红烧肉</button>
       <button type="button" @click="form.dishName = '番茄炒蛋'">番茄炒蛋</button>
     </div>
-  </section>
+  </form>
 </template>

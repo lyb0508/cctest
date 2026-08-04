@@ -74,13 +74,27 @@ public class GlobalExceptionHandler {
         return new ApiResponse<>(4040, exception.getMessage(), null);
     }
 
+    // API Key 缺失/不匹配（未授权）
+    @ExceptionHandler(UnauthorizedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ApiResponse<Void> handleUnauthorized(UnauthorizedException exception) {
+        return new ApiResponse<>(4010, exception.getMessage(), null);
+    }
+
+    // 触发限流（请求过于频繁）
+    @ExceptionHandler(RateLimitExceededException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public ApiResponse<Void> handleRateLimit(RateLimitExceededException exception) {
+        return new ApiResponse<>(4290, exception.getMessage(), null);
+    }
+
     // 业务异常：服务端配置/能力问题（如 AI 未配置、AI 返回无法解析）
     @ExceptionHandler(BusinessException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiResponse<Void> handleBusiness(BusinessException exception) {
-        // 业务异常 message 会透传给调用方，这里同时落 warn 日志便于排查
+        // 不把内部细节（配置缺失、AI 失败原因）透传给客户端，明细只留日志
         log.warn("Business exception: {}", exception.getMessage());
-        return new ApiResponse<>(5001, exception.getMessage(), null);
+        return new ApiResponse<>(5001, "Business error, please try again later", null);
     }
 
     // 兜底：未知异常绝不把堆栈暴露给客户端，只记录日志并返回通用提示

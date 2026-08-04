@@ -8,6 +8,10 @@ spring:
 foodai:
   cors:
     allowed-origins: http://localhost:5173
+  security:
+    api-key: ""
+  rate-limit:
+    requests-per-minute: 10
   ai:
     provider: ollama
     model-name: qwen2.5:3b

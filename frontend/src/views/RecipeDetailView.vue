@@ -26,25 +26,28 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="detail-layout">
+  <div class="detail">
     <p v-if="loading" class="status-text">加载中...</p>
     <p v-else-if="errorMessage" class="error-text">{{ errorMessage }}</p>
     <template v-else-if="recipe">
       <RecipeHeader :recipe="recipe" />
-      <section class="panel soft-panel intro-panel">
-        <h3>菜谱简介</h3>
-        <p>{{ recipe.recipe.description }}</p>
+      <section class="card intro-card">
+        <p class="eyebrow">Intro</p>
+        <h3 class="block-title">菜谱简介</h3>
+        <p class="intro-text">{{ recipe.recipe.description }}</p>
       </section>
-      <div class="content-split">
+      <div class="split">
         <IngredientList :ingredients="recipe.recipe.ingredients" />
         <RecipeStepList :steps="recipe.recipe.steps" />
       </div>
-      <section class="panel soft-panel">
-        <h3>制作提示</h3>
-        <ul class="bullet-list">
+      <section class="card tips-card">
+        <p class="eyebrow">Tips</p>
+        <h3 class="block-title">制作提示</h3>
+        <ul class="tips-list">
           <li v-for="tip in recipe.recipe.tips" :key="tip">{{ tip }}</li>
         </ul>
       </section>
+      <router-link class="back-link" to="/">← 再来一道</router-link>
     </template>
   </div>
 </template>

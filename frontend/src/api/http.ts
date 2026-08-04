@@ -1,9 +1,11 @@
 import axios from "axios";
 import type { ApiResponse } from "../types/recipe";
 
-// axios 实例：baseURL 优先取 VITE_API_BASE 环境变量（部署时指向真实后端），本地开发默认 8080
+// axios 实例：
+// - baseURL 默认用相对路径 /api，经 Vite 代理转发到后端（局域网设备也能用，不会指向设备自己的 localhost）
+// - 部署时可用 VITE_API_BASE 环境变量覆盖为真实后端地址
 const http = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE || "http://localhost:8080/api",
+  baseURL: import.meta.env.VITE_API_BASE || "/api",
   timeout: 15000
 });
 

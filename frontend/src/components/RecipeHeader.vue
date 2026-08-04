@@ -1,23 +1,34 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import type { RecipeDetailResponse } from "../types/recipe";
 
-// 菜谱头部：展示类型/标题/摘要与元信息（份量、时间、难度）
-defineProps<{
+// 菜谱头部：标题/摘要 + 元信息（份量、时间、难度）
+const props = defineProps<{
   recipe: RecipeDetailResponse;
 }>();
+
+// 把后端的英文难度枚举映射为中文展示
+const difficultyLabel = computed(
+  () =>
+    ({
+      BEGINNER: "新手",
+      INTERMEDIATE: "进阶",
+      ADVANCED: "熟练"
+    })[props.recipe.recipe.difficulty] ?? props.recipe.recipe.difficulty
+);
 </script>
 
 <template>
-  <section class="panel">
+  <header class="detail-head">
     <p class="eyebrow">{{ recipe.generationType }}</p>
-    <h2>{{ recipe.title }}</h2>
-    <p class="recipe-summary">{{ recipe.summary }}</p>
+    <h1 class="detail-title">{{ recipe.title }}</h1>
+    <p class="detail-summary">{{ recipe.summary }}</p>
     <div class="meta-row">
-      <span>人数 {{ recipe.recipe.servings }}</span>
-      <span>准备 {{ recipe.recipe.prepTime }} 分钟</span>
-      <span>烹饪 {{ recipe.recipe.cookTime }} 分钟</span>
-      <span>总时长 {{ recipe.recipe.totalTime }} 分钟</span>
-      <span>难度 {{ recipe.recipe.difficulty }}</span>
+      <span class="meta-chip">份量 <strong>{{ recipe.recipe.servings }} 人</strong></span>
+      <span class="meta-chip">准备 <strong class="time">{{ recipe.recipe.prepTime }} 分</strong></span>
+      <span class="meta-chip">烹饪 <strong class="time">{{ recipe.recipe.cookTime }} 分</strong></span>
+      <span class="meta-chip">总计 <strong class="time">{{ recipe.recipe.totalTime }} 分</strong></span>
+      <span class="meta-chip">难度 <strong>{{ difficultyLabel }}</strong></span>
     </div>
-  </section>
+  </header>
 </template>
