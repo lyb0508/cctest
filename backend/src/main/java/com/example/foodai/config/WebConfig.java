@@ -17,12 +17,12 @@ public class WebConfig implements WebMvcConfigurer {
     /** 允许的来源白名单，来自配置项 foodai.cors.allowed-origins（逗号分隔可配多个） */
     private final String[] allowedOrigins;
 
-    private final AuthRateLimitInterceptor authRateLimitInterceptor;
+    private final ApiAuthInterceptor apiAuthInterceptor;
 
     public WebConfig(@Value("${foodai.cors.allowed-origins:http://localhost:5173}") String[] allowedOrigins,
-                     AuthRateLimitInterceptor authRateLimitInterceptor) {
+                     ApiAuthInterceptor apiAuthInterceptor) {
         this.allowedOrigins = allowedOrigins;
-        this.authRateLimitInterceptor = authRateLimitInterceptor;
+        this.apiAuthInterceptor = apiAuthInterceptor;
     }
 
     @Override
@@ -36,7 +36,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // 鉴权 + 限流作用于所有 /api/** 请求（配置见 foodai.security / foodai.rate-limit）
-        registry.addInterceptor(authRateLimitInterceptor).addPathPatterns("/api/**");
+        // API Key 鉴权作用于所有 /api/** 请求（配置见 foodai.security）
+        registry.addInterceptor(apiAuthInterceptor).addPathPatterns("/api/**");
     }
 }

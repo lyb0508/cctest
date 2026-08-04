@@ -9,6 +9,11 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    headers: {
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+      "Referrer-Policy": "no-referrer"
+    },
     proxy: {
       "/api": {
         target: "http://localhost:8080",

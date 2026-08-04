@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -95,6 +96,13 @@ public class GlobalExceptionHandler {
         // 不把内部细节（配置缺失、AI 失败原因）透传给客户端，明细只留日志
         log.warn("Business exception: {}", exception.getMessage());
         return new ApiResponse<>(5001, "Business error, please try again later", null);
+    }
+
+    // HTTP 方法不允许（如用 PUT/DELETE 调用只允许 GET/POST 的接口）
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    public ApiResponse<Void> handleMethodNotAllowed(HttpRequestMethodNotSupportedException exception) {
+        return new ApiResponse<>(4050, "Method not allowed", null);
     }
 
     // 兜底：未知异常绝不把堆栈暴露给客户端，只记录日志并返回通用提示
