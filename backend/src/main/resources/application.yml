@@ -3,18 +3,28 @@ server:
   address: 127.0.0.1
 
 spring:
+  config:
+    import: optional:file:./.env[.properties],optional:file:./backend/.env[.properties]
   application:
     name: food-ai-assistant-backend
+  datasource:
+    url: ${SUPABASE_DB_URL}
+    username: ${SUPABASE_DB_USER}
+    password: ${SUPABASE_DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
 
 foodai:
   cors:
-    allowed-origins: http://localhost:5173
+    allowed-origins: ${FOODAI_CORS_ALLOWED_ORIGINS:http://localhost:5173}
   security:
-    api-key: ""
+    api-key: ${FOODAI_SECURITY_API_KEY:}
   rate-limit:
     requests-per-minute: 10
   ai:
-    provider: ollama
-    model-name: qwen2.5:3b
-    api-key: ""
-    base-url: http://localhost:11434
+    provider: ${FOODAI_AI_PROVIDER:ollama}
+    model-name: ${FOODAI_AI_MODEL_NAME:qwen2.5:3b}
+    api-key: ${FOODAI_AI_API_KEY:}
+    base-url: ${FOODAI_AI_BASE_URL:http://localhost:11434}
